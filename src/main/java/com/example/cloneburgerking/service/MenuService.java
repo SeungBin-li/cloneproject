@@ -72,37 +72,6 @@ public class MenuService {
         menuRepository.delete(menu);
     }
 
-    //메뉴수정
-    @Transactional
-    public ResponseEntity<?> updateMenu(Long id, MenuRequestDto requestDto, User user, MultipartFile file) throws IOException {
-        // id로 데이터를 조회
-        System.out.println("============id조회=============");
-        Menu menu = getmenu(id);
-        if (!user.getRole().equals(UserEnum.ADMIN))
-            throw new CustomException(ErrorCode.ROLE_NOT_EXISTS);
-        // S3에서 기존 파일 삭제
-        System.out.println("============기존파일삭제=============");
-        String url = menu.getFileUrl();
-        if (url != null) {
-            String fileName = url.substring(url.lastIndexOf("/") + 1);
-            s3Service.deleteFile(fileName);
-        }
-        // 수정하고자 하는 내용을 반영하여 Menu 객체를 업데이트
-        menu.setTitle(requestDto.getTitle());
-        menu.setCategory(requestDto.getCategory());
-        menu.setPrice(requestDto.getPrice());
-        if (file != null) {
-            System.out.println("============파일업로드=============");
-            String fileUrl = s3Service.uploadFile(file.getOriginalFilename(), file.getBytes(), file.getContentType());
-            menu.setFileUrl(fileUrl);
-        }
-        System.out.println("============업데이트=============");
-        // DB에서 데이터를 업데이트
-        menuRepository.save(menu);
-        // 수정된 정보를 반환
-        return ResponseEntity.status(HttpStatus.OK).body(menu);
-    }
-
     public Menu getmenu(Long id) {
         return menuRepository.findById(id).orElseThrow(
                () -> new CustomException(ErrorCode.NOT_FOUND_DATA));
